@@ -1,0 +1,31 @@
+[project]
+name = "k1-mimic"
+version = "0.1.0"
+description = "Video/text to K1 motion retargeting (GVHMR, GMR, SOMA, Kimodo) with a Gradio UI."
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "gradio",
+  "imageio",
+  "mujoco",
+  "numpy",
+  "pillow",
+  "scipy",
+  "torch",
+  "k1-common",
+  "k1-utils",
+]
+
+[tool.uv.sources]
+k1-common = { git = "https://github.com/thdhyan/k1-common" }
+k1-utils = { git = "https://github.com/thdhyan/k1-utils" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/k1m"]
+
+# Provided by the environment (ROS 2, Isaac Sim/Lab, mjlab, robot SDK) or not on PyPI under this name:
+# general_motion_retargeting, newton, rclpy, sensor_msgs, smplx, soma, soma_retargeter, std_msgs, warp
