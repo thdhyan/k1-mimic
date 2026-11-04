@@ -43,8 +43,8 @@ scripts/  (8 files)
   gmr_bvh_to_k1_csv.py
   gmr_pkl_to_k1_csv.py
   mk_soma_k1_target.py
-  motion_feasibility_gate.py
-  record_k1_motion.py
+  `python -m k1m.gate`
+  `python -m k1m.render`
   restart_k1m_app.sh
   soma_csv_to_k1_csv.py
 service/  (1 files)

@@ -29,9 +29,9 @@ Checks, in order of how likely they are to be the thing that breaks the robot:
 Exit code 0 = pass, 1 = fail, 2 = could not evaluate (bad input).
 
 Usage:
-  python3 scripts/motion_feasibility_gate.py motion.csv
-  python3 scripts/motion_feasibility_gate.py motion.csv --fps 50 --json report.json
-  python3 scripts/motion_feasibility_gate.py motions/*.csv --strict
+  python3 -m k1m.gate motion.csv
+  python3 -m k1m.gate motion.csv --fps 50 --json report.json
+  python3 -m k1m.gate motions/*.csv --strict
 
 This is a kinematic screen, not a physics rollout. Passing it means the motion
 is *worth simulating*, not that it is safe on hardware. Phase 4 of
@@ -46,13 +46,14 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field, asdict
 
+import k1_description
 import numpy as np
+from k1_common.clip_schema import K1_JOINT_NAMES
 
 # --------------------------------------------------------------------------- #
 # K1 model constants (verified against K1_22dof.urdf)
 # --------------------------------------------------------------------------- #
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-URDF = os.path.join(REPO, "src/k1_description/assets/robots/K1/K1_22dof.urdf")
+URDF = str(k1_description.robot_file(k1_description.URDF))
 
 # K1 standing root (Trunk) height. BOOSTER_K1_CFG init_state z=0.57.
 ROOT_HEIGHT_NOMINAL = 0.57
@@ -69,16 +70,8 @@ MASS_PER_ARM_JOINT = 0.5
 MASS_HEAD = 0.6
 NOMINAL_GRAVITY = 9.81
 
-# booster_assets.motions.K1_JOINT_NAMES — the CSV column order
-JOINT_NAMES = [
-    "AAHead_yaw", "Head_pitch",
-    "ALeft_Shoulder_Pitch", "Left_Shoulder_Roll", "Left_Elbow_Pitch", "Left_Elbow_Yaw",
-    "ARight_Shoulder_Pitch", "Right_Shoulder_Roll", "Right_Elbow_Pitch", "Right_Elbow_Yaw",
-    "Left_Hip_Pitch", "Left_Hip_Roll", "Left_Hip_Yaw",
-    "Left_Knee_Pitch", "Left_Ankle_Pitch", "Left_Ankle_Roll",
-    "Right_Hip_Pitch", "Right_Hip_Roll", "Right_Hip_Yaw",
-    "Right_Knee_Pitch", "Right_Ankle_Pitch", "Right_Ankle_Roll",
-]
+# CSV column order (the shared motion-clip contract)
+JOINT_NAMES = list(K1_JOINT_NAMES)
 N_JOINTS = len(JOINT_NAMES)
 N_COLS = 7 + N_JOINTS  # 7 root + 22 joints
 
@@ -89,7 +82,7 @@ FOOT_JOINTS = ["Left_Ankle_Roll", "Right_Ankle_Roll"]
 # matches K1_JOINT_NAMES exactly (verified: 7 free-joint qpos, then 22 hinges
 # in the same sequence), and the sole box geom sits 0.038 m below each
 # foot_link origin.
-MJCF = os.path.join(REPO, "src/k1_description/assets/robots/K1/K1_22dof.xml")
+MJCF = str(k1_description.robot_file(k1_description.MJCF))
 SOLE_DROP = 0.038   # foot_link origin -> sole plane, from the K1 MJCF foot box
 
 _FK = None  # lazily-built (model, data, foot body ids)

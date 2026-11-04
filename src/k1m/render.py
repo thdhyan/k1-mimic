@@ -29,10 +29,10 @@ it is expected to fall. That is the point: the video shows whether the
 retargeted motion is even worth handing to an RL tracker.
 
 Usage
-  python3 scripts/record_k1_motion.py <motion.csv> --out docs/videos/motion.mp4
-  python3 scripts/record_k1_motion.py <motion.csv> --out /tmp/x.mp4 --fps 50 \
+  python3 -m k1m.render <motion.csv> --out docs/videos/motion.mp4
+  python3 -m k1m.render <motion.csv> --out /tmp/x.mp4 --fps 50 \
       --start 100 --duration 300
-  xvfb-run -a python3 scripts/record_k1_motion.py <motion.csv> --out /tmp/x.mp4
+  xvfb-run -a python3 -m k1m.render <motion.csv> --out /tmp/x.mp4
 """
 from __future__ import annotations
 
@@ -40,21 +40,14 @@ import argparse
 import os
 import sys
 
+import k1_description
 import numpy as np
+from k1_common.clip_schema import K1_JOINT_NAMES
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MJCF = os.path.join(REPO, "src/k1_description/assets/robots/K1/K1_22dof.xml")
+MJCF = str(k1_description.robot_file(k1_description.MJCF))
 
-# booster_assets.motions.K1_JOINT_NAMES — CSV column order
-JOINT_NAMES = [
-    "AAHead_yaw", "Head_pitch",
-    "ALeft_Shoulder_Pitch", "Left_Shoulder_Roll", "Left_Elbow_Pitch", "Left_Elbow_Yaw",
-    "ARight_Shoulder_Pitch", "Right_Shoulder_Roll", "Right_Elbow_Pitch", "Right_Elbow_Yaw",
-    "Left_Hip_Pitch", "Left_Hip_Roll", "Left_Hip_Yaw",
-    "Left_Knee_Pitch", "Left_Ankle_Pitch", "Left_Ankle_Roll",
-    "Right_Hip_Pitch", "Right_Hip_Roll", "Right_Hip_Yaw",
-    "Right_Knee_Pitch", "Right_Ankle_Pitch", "Right_Ankle_Roll",
-]
+# CSV column order (the shared motion-clip contract)
+JOINT_NAMES = list(K1_JOINT_NAMES)
 FOOT_BODIES = ("left_foot_link", "right_foot_link")
 SOLE_DROP = 0.038
 CONTACT_Z = 0.04

@@ -1,7 +1,7 @@
 """Stages that run on the local machine: the feasibility gate and the render.
 
-Both wrap the existing scripts via subprocess rather than reimplementing their
-logic. `motion_feasibility_gate.py` is the pre-flight authority on whether a
+Both run :mod:`k1m.gate` / :mod:`k1m.render` in a subprocess rather than
+in-process. `motion_feasibility_gate.py` is the pre-flight authority on whether a
 motion is safe to send to hardware, and `record_k1_motion.py` is a validated
 dynamic PD replay -- both have accumulated fixes (geom groups, quaternion
 order, the K1 sole-frame offset) that would be easy to lose by forking them
@@ -14,9 +14,6 @@ import os
 import subprocess
 import sys
 
-from . import schema
-
-_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _py() -> str:
@@ -35,18 +32,25 @@ def _env() -> dict:
     """A clean env.
 
     The ROS 2 workspace exports PYTHONPATH and LD_LIBRARY_PATH that shadow
-    libtorch and break `import torch` in any venv (see scripts/py_torch.sh), so
-    both are stripped for every child process.
+    libtorch and break `import torch` in any venv, so ROS entries are stripped
+    for every child process. Non-ROS PYTHONPATH entries (e.g. a source
+    checkout of k1m) are kept so the child can import this package.
     """
     e = dict(os.environ)
+    ros = tuple(p for k in ("AMENT_PREFIX_PATH", "COLCON_PREFIX_PATH")
+                for p in e.get(k, "").split(os.pathsep) if p) + ("/opt/ros/",)
+    keep = [p for p in e.get("PYTHONPATH", "").split(os.pathsep)
+            if p and not p.startswith(ros)]
     for k in ("PYTHONPATH", "LD_LIBRARY_PATH", "AMENT_PREFIX_PATH",
               "COLCON_PREFIX_PATH", "CMAKE_PREFIX_PATH", "ROS_DISTRO"):
         e.pop(k, None)
+    if keep:
+        e["PYTHONPATH"] = os.pathsep.join(keep)
     return e
 
 
 def gate(motion_csv: str, fps: float = 30.0,
-         urdf: str = schema.DEFAULT_K1_URDF,
+         urdf: str | None = None,
          report_json: str | None = None) -> dict:
     """Run the feasibility gate. Returns the parsed report.
 
@@ -55,12 +59,12 @@ def gate(motion_csv: str, fps: float = 30.0,
     dynamics and no actuator model behind it, which is exactly what breaks a
     real robot.
     """
-    script = os.path.join(_REPO, "scripts", "motion_feasibility_gate.py")
     report_json = report_json or (os.path.splitext(motion_csv)[0] + "_gate.json")
-    p = subprocess.run(
-        [sys.executable, script, motion_csv, "--fps", str(fps),
-         "--urdf", urdf, "--json", report_json],
-        capture_output=True, text=True, env=_env(), cwd=_REPO)
+    cmd = [sys.executable, "-m", "k1m.gate", motion_csv, "--fps", str(fps),
+           "--json", report_json]
+    if urdf:
+        cmd += ["--urdf", urdf]
+    p = subprocess.run(cmd, capture_output=True, text=True, env=_env())
     out = (p.stdout or "") + (p.stderr or "")
     if not os.path.exists(report_json):
         raise RuntimeError(f"gate produced no report (exit {p.returncode})\n"
@@ -76,13 +80,12 @@ def render(motion_csv: str, out_mp4: str, fps: float = 30.0,
            title: str = "", sim_fps: int = 200, width: int = 1280,
            gl: str = "egl") -> str:
     """Render the 3-panel MuJoCo replay to `out_mp4`. Returns the path."""
-    script = os.path.join(_REPO, "scripts", "record_k1_motion.py")
-    cmd = [sys.executable, script, motion_csv, "--out", out_mp4,
+    cmd = [sys.executable, "-m", "k1m.render", motion_csv, "--out", out_mp4,
            "--fps", str(fps), "--sim-fps", str(sim_fps),
            "--width", str(width), "--gl", gl]
     if title:
         cmd += ["--title", title]
-    p = subprocess.run(cmd, capture_output=True, text=True, env=_env(), cwd=_REPO)
+    p = subprocess.run(cmd, capture_output=True, text=True, env=_env())
     if p.returncode != 0 or not os.path.exists(out_mp4):
         raise RuntimeError(f"render failed (exit {p.returncode})\n"
                            + "\n".join(((p.stdout or "") + (p.stderr or ""))

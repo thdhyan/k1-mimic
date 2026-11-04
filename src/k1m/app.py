@@ -28,7 +28,8 @@ import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from k1m import local_stages, pipeline, remote_stages, schema  # noqa: E402
+from k1_common import clip_schema as schema  # noqa: E402
+from k1m import local_stages, pipeline, remote_stages  # noqa: E402
 
 import gradio as gr  # noqa: E402
 

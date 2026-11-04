@@ -158,7 +158,8 @@ def main() -> int:
         # height generally does not match K1's leg length — the robot ends up
         # floating (or sunk) with no foot ever near z=0. Solve it with real
         # K1 forward kinematics rather than a hand-tuned constant.
-        shift = _ground_offset(out, REPO_URDF)
+        import k1_description
+        shift = _ground_offset(out, str(k1_description.robot_file(k1_description.MJCF)))
         pos[:, 2] += shift
         out[:, 0:3] = pos
         print(f"[soma->k1] grounded: root z shifted by {shift:+.4f} m so the "
@@ -176,9 +177,6 @@ def main() -> int:
     return 0
 
 
-REPO_URDF = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "src/k1_description/assets/robots/K1/K1_22dof.xml")
 SOLE_DROP = 0.038   # foot_link origin -> sole plane, from the K1 MJCF foot box
 
 

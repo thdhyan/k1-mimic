@@ -16,7 +16,9 @@ import argparse
 import os
 import sys
 
-from . import local_stages, pipeline, remote_stages, schema
+from k1_common import clip_schema as schema
+
+from . import local_stages, pipeline, remote_stages
 
 
 def _print_result(r: pipeline.Result) -> int:

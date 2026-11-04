@@ -20,7 +20,9 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 
-from . import local_stages, remote_stages, schema
+from k1_common import clip_schema as schema
+
+from . import local_stages, remote_stages
 
 
 @dataclass

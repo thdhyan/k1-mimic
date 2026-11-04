@@ -13,11 +13,13 @@ dependencies = [
   "scipy",
   "torch",
   "k1-common",
+  "k1-description",
   "k1-utils",
 ]
 
 [tool.uv.sources]
 k1-common = { git = "https://github.com/thdhyan/k1-common" }
+k1-description = { git = "https://github.com/thdhyan/k1-description" }
 k1-utils = { git = "https://github.com/thdhyan/k1-utils" }
 
 [build-system]
