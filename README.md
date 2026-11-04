@@ -9,6 +9,22 @@ Video/text to K1 motion retargeting (GVHMR, GMR, SOMA, Kimodo) with a Gradio UI.
 | Files / LOC | 19 files · 3,722 lines (py, sh, cpp) |
 | Part of | [k1-workspace](https://github.com/thdhyan/k1-workspace) (architecture and layering rules live there) |
 
+## Where it sits
+
+```mermaid
+flowchart TB
+  k1_common[k1-common]
+  k1_utils[k1-utils]
+  k1_mimic((k1-mimic))
+  style k1_mimic fill:#e8833a,color:#000
+  k1_mimic --> k1_common
+  k1_mimic --> k1_utils
+```
+
+Used by: nothing (top layer).
+
+![k1-workspace layers](https://raw.githubusercontent.com/thdhyan/k1-workspace/main/docs/img/architecture.png)
+
 ## Install
 
 ```bash
@@ -20,6 +36,7 @@ uv sync
 ## Layout
 
 ```
+README.md
 pyproject.toml
 scripts/  (8 files)
   README.md
